@@ -7,20 +7,17 @@ public class FibonacciHeap
 {
     HeapNode Min;
     HeapNode First;
-    int size;
-    int linksCounter = 0;
-    int cutsCounter = 0;
+    static int linksCounter = 0;
+    static int cutsCounter = 0;
 
     public FibonacciHeap() { //Create an empty FibHeap. Complexity: O(1)
         First = null;
         Min = null;
-        size = 0;
     }
 
     public FibonacciHeap(HeapNode root) { //Create a single node FibHeap. Complexity: O(1)
         First = root;
         Min = First;
-        size = 1;
     }
 
    /**
@@ -36,6 +33,8 @@ public class FibonacciHeap
     public void verifyMin(HeapNode x) { //Complexity: O(1)
         if (x.getKey() < Min.getKey()) Min = x;
     }
+
+    //public void link(HeapNode y)
 		
    /**
     * public HeapNode insert(int key)
@@ -82,10 +81,6 @@ public class FibonacciHeap
         return this.First.prev;
     }
 
-    private void updateSize(FibonacciHeap otherHeap) { //Complexity: O(1)
-        this.size += otherHeap.size();
-    }
-
    /**
     * public void meld (FibonacciHeap heap2)
     *
@@ -106,7 +101,6 @@ public class FibonacciHeap
         this.First = heap2.First; //new is always to the left
 
         this.verifyMin(heap2.Min);
-        this.updateSize(heap2);
     }
 
    /**
@@ -116,7 +110,13 @@ public class FibonacciHeap
     *   
     */
     public int size()     { //Complexity: O(1)
-    	return this.size;
+    	int s = First.getSize();
+        HeapNode n = First.getNext();
+        while (n != First) {
+            s += n.getSize();
+            n = n.getNext();
+        }
+        return s;
     }
     	
     /**
@@ -146,15 +146,57 @@ public class FibonacciHeap
         this.deleteMin(); //as the new minimum, x has been deleted
     }
 
+    /*
+    public HeapNode find(HeapNode x) {
+        int X = x.getKey();
+
+        HeapNode r = this.First;
+        int R = r.getKey();
+
+        while (R < X) {
+            r = r.getNext();
+        }
+    }
+
+     */
+
    /**
     * public void decreaseKey(HeapNode x, int delta)
     *
     * Decreases the key of the node x by a non-negative value delta. The structure of the heap should be updated
     * to reflect this change (for example, the cascading cuts procedure should be applied if needed).
     */
-    public void decreaseKey(HeapNode x, int delta)
-    {    
-    	return; // should be replaced by student code
+    public void decreaseKey(HeapNode x, int delta) {
+        x.setKey(x.getKey() - delta); //decrease-key
+
+        if (x.getKey() >= x.getParent().getKey()) {//heap invariant holds
+            return;
+        }
+        else { //invariant has been invalidated
+            cascadingCuts(x); //preforms cascading cuts and melds into the heap
+        }
+    }
+
+    public void cascadingCuts(HeapNode x) {
+        HeapNode parent = cut(x); //sever x from its father
+        this.meld(new FibonacciHeap(x));
+
+        while (parent.isMark()) { //cascading cuts; root is never marked.
+            parent = cut(parent);
+        }
+    }
+
+    public HeapNode cut(HeapNode x) { //sever x from its father and return the father
+        HeapNode p = x.getParent();
+        x.setParent(null);
+        p.setChild(null);
+
+        p.Mark(); //mark the father
+        cutsCounter++;
+
+        this.meld(new FibonacciHeap(x)); //meld the freshly cut sapling to the heap
+
+        return p;
     }
 
    /**
@@ -181,7 +223,7 @@ public class FibonacciHeap
     */
     public static int totalLinks()
     {    
-    	return -345; // should be replaced by student code
+    	return linksCounter;
     }
 
    /**
@@ -193,7 +235,7 @@ public class FibonacciHeap
     */
     public static int totalCuts()
     {    
-    	return -456; // should be replaced by student code
+    	return cutsCounter;
     }
 
      /**
@@ -224,11 +266,14 @@ public class FibonacciHeap
         private HeapNode child;
         private HeapNode next;
         private HeapNode prev;
-        private   HeapNode degree;
+        private int degree;
+        private int size;
         private boolean mark;
 
        public HeapNode(int key) {
     		this.key = key;
+            this.size = 1;
+            this.mark = false;
     	}
 
     	public int getKey() { //Complexity: O(1)
@@ -243,16 +288,19 @@ public class FibonacciHeap
            return parent;
        }
 
-       public void setParent(HeapNode p) { //Complexity: O(1)
+       public void setParent(HeapNode p) { //link is bi-directional, Complexity: O(1)
            this.parent = p;
+           if (p != null) p.child = this;
+
        }
 
        public HeapNode getChild() { //Complexity: O(1)
            return child;
        }
 
-       public void setChild(HeapNode c) { //Complexity: O(1)
+       public void setChild(HeapNode c) { //link is bi-directional, Complexity: O(1)
            this.child = c;
+           if (c != null) c.parent = this;
        }
 
        public HeapNode getNext() { //Complexity: O(1)
@@ -261,7 +309,7 @@ public class FibonacciHeap
 
        public void setNext(HeapNode n) { //link is bi-directional, Complexity: O(1)
            this.next = n;
-           n.prev = this;
+           if (n != null) n.prev = this;
        }
 
        public HeapNode getPrev() { //Complexity: O(1)
@@ -270,14 +318,14 @@ public class FibonacciHeap
 
        public void setPrev(HeapNode p) { //link is bi-directional, Complexity: O(1)
            this.prev = p;
-           p.next = this;
+          if (p != null) p.next = this;
        }
 
-       public HeapNode getDegree() { //Complexity: O(1)
+       public int getDegree() { //Complexity: O(1)
            return degree;
        }
 
-       public void setDegree(HeapNode d) { //Complexity: O(1)
+       public void setDegree(int d) { //Complexity: O(1)
            this.degree = d;
        }
 
@@ -287,6 +335,23 @@ public class FibonacciHeap
 
        public void Mark() { //Complexity: O(1)
            this.mark = this.parent != null; //mark node as MARKED only if it is not a root;
+       }
+
+       public int getSize() {
+           return size;
+       }
+
+       public void updateSize() {
+           HeapNode c = this.child;
+           int s = c.getSize();
+
+           HeapNode n = c.next;
+           while (c != n) {
+               s += n.getSize();
+               n = n.next;
+           }
+
+           this.size = s +1;
        }
    }
 }
