@@ -5,6 +5,23 @@
  */
 public class FibonacciHeap
 {
+    HeapNode Min;
+    HeapNode First;
+    int size;
+    int linksCounter = 0;
+    int cutsCounter = 0;
+
+    public FibonacciHeap() { //Create an empty FibHeap. Complexity: O(1)
+        First = null;
+        Min = null;
+        size = 0;
+    }
+
+    public FibonacciHeap(HeapNode root) { //Create a single node FibHeap. Complexity: O(1)
+        First = root;
+        Min = First;
+        size = 1;
+    }
 
    /**
     * public boolean isEmpty()
@@ -12,9 +29,12 @@ public class FibonacciHeap
     * Returns true if and only if the heap is empty.
     *   
     */
-    public boolean isEmpty()
-    {
-    	return false; // should be replaced by student code
+    public boolean isEmpty() { //Complexity: O(1)
+    	return Min == null;
+    }
+
+    public void verifyMin(HeapNode x) { //Complexity: O(1)
+        if (x.getKey() < Min.getKey()) Min = x;
     }
 		
    /**
@@ -25,9 +45,13 @@ public class FibonacciHeap
     * 
     * Returns the newly created node.
     */
-    public HeapNode insert(int key)
-    {    
-    	return new HeapNode(key); // should be replaced by student code
+    public HeapNode insert(int key)    { //Complexity: O(1)
+        HeapNode newNode = new HeapNode(key);
+        FibonacciHeap singularHeap = new FibonacciHeap(newNode);
+
+        this.meld(singularHeap);
+
+    	return newNode;
     }
 
    /**
@@ -38,7 +62,7 @@ public class FibonacciHeap
     */
     public void deleteMin()
     {
-     	return; // should be replaced by student code
+     	; // should be replaced by student code
      	
     }
 
@@ -48,20 +72,41 @@ public class FibonacciHeap
     * Returns the node of the heap whose key is minimal, or null if the heap is empty.
     *
     */
-    public HeapNode findMin()
+    public HeapNode findMin() //Complexity: O(1)
     {
-    	return new HeapNode(678);// should be replaced by student code
-    } 
-    
+    	return Min;
+    }
+
+
+    private HeapNode findLastRoot() { //Complexity: O(1)
+        return this.First.prev;
+    }
+
+    private void updateSize(FibonacciHeap otherHeap) { //Complexity: O(1)
+        this.size += otherHeap.size();
+    }
+
    /**
     * public void meld (FibonacciHeap heap2)
     *
     * Melds heap2 with the current heap.
     *
     */
-    public void meld (FibonacciHeap heap2)
-    {
-    	  return; // should be replaced by student code   		
+
+    public void meld (FibonacciHeap heap2) { //Complexity: O(1)
+        if (heap2.isEmpty()) return;
+        else if (this.isEmpty()) {
+            this.First = heap2.First;
+            this.Min = heap2.Min;
+        }
+
+        HeapNode Last2 = heap2.findLastRoot();
+        Last2.setNext(this.First); //link is implemented bi-directionally
+        heap2.First.setPrev(this.findLastRoot());
+        this.First = heap2.First; //new is always to the left
+
+        this.verifyMin(heap2.Min);
+        this.updateSize(heap2);
     }
 
    /**
@@ -70,9 +115,8 @@ public class FibonacciHeap
     * Returns the number of elements in the heap.
     *   
     */
-    public int size()
-    {
-    	return -123; // should be replaced by student code
+    public int size()     { //Complexity: O(1)
+    	return this.size;
     }
     	
     /**
@@ -95,9 +139,11 @@ public class FibonacciHeap
 	* It is assumed that x indeed belongs to the heap.
     *
     */
-    public void delete(HeapNode x) 
-    {    
-    	return; // should be replaced by student code
+    public void delete(HeapNode x) {
+        int distFromMin = x.getKey() - this.Min.getKey();
+    	decreaseKey(x, distFromMin - 1); //x is now surely the minimal node
+
+        this.deleteMin(); //as the new minimum, x has been deleted
     }
 
    /**
@@ -174,13 +220,73 @@ public class FibonacciHeap
     public static class HeapNode{
 
     	public int key;
+        private HeapNode parent;
+        private HeapNode child;
+        private HeapNode next;
+        private HeapNode prev;
+        private   HeapNode degree;
+        private boolean mark;
 
-    	public HeapNode(int key) {
+       public HeapNode(int key) {
     		this.key = key;
     	}
 
-    	public int getKey() {
+    	public int getKey() { //Complexity: O(1)
     		return this.key;
     	}
-    }
+
+       public void setKey(int key) { //Complexity: O(1)
+           this.key = key;
+       }
+
+       public HeapNode getParent() { //Complexity: O(1)
+           return parent;
+       }
+
+       public void setParent(HeapNode p) { //Complexity: O(1)
+           this.parent = p;
+       }
+
+       public HeapNode getChild() { //Complexity: O(1)
+           return child;
+       }
+
+       public void setChild(HeapNode c) { //Complexity: O(1)
+           this.child = c;
+       }
+
+       public HeapNode getNext() { //Complexity: O(1)
+           return next;
+       }
+
+       public void setNext(HeapNode n) { //link is bi-directional, Complexity: O(1)
+           this.next = n;
+           n.prev = this;
+       }
+
+       public HeapNode getPrev() { //Complexity: O(1)
+           return prev;
+       }
+
+       public void setPrev(HeapNode p) { //link is bi-directional, Complexity: O(1)
+           this.prev = p;
+           p.next = this;
+       }
+
+       public HeapNode getDegree() { //Complexity: O(1)
+           return degree;
+       }
+
+       public void setDegree(HeapNode d) { //Complexity: O(1)
+           this.degree = d;
+       }
+
+       public boolean isMark() { //Complexity: O(1)
+           return mark;
+       }
+
+       public void Mark() { //Complexity: O(1)
+           this.mark = this.parent != null; //mark node as MARKED only if it is not a root;
+       }
+   }
 }
