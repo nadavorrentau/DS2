@@ -7,17 +7,20 @@ public class FibonacciHeap
 {
     HeapNode Min;
     HeapNode First;
+    int totalSize;
     static int linksCounter = 0;
     static int cutsCounter = 0;
 
     public FibonacciHeap() { //Create an empty FibHeap. Complexity: O(1)
         First = null;
         Min = null;
+        totalSize = 0;
     }
 
-    public FibonacciHeap(HeapNode root) { //Create a single node FibHeap. Complexity: O(1)
+    public FibonacciHeap(HeapNode root) { //Create a rank 1 FibHeap. Complexity: O(1)
         First = root;
         Min = First;
+        totalSize = root.getSize();
     }
 
    /**
@@ -101,6 +104,7 @@ public class FibonacciHeap
         this.First = heap2.First; //new is always to the left
 
         this.verifyMin(heap2.Min);
+        this.totalSize += heap2.totalSize;
     }
 
    /**
@@ -110,14 +114,18 @@ public class FibonacciHeap
     *   
     */
     public int size()     { //Complexity: O(1)
-    	int s = First.getSize();
+    	return totalSize;
+    }
+
+    /*
+    int s = First.getSize();
         HeapNode n = First.getNext();
         while (n != First) {
             s += n.getSize();
             n = n.getNext();
         }
         return s;
-    }
+     */
     	
     /**
     * public int[] countersRep()
