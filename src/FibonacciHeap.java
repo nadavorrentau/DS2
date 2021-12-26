@@ -418,9 +418,10 @@ public class FibonacciHeap {
         
         for (int i = 0; i < k; i++) {
         	HeapNode curr = kHeap.findMin();
-        	HeapNode pointer = curr.getOriginalHeap().getChild();
         	arr[i] = curr.getKey();
         	kHeap.deleteMin();
+        	HeapNode pointer = curr.getOriginalHeap().getChild();
+        	if (pointer == null) continue;
         	do {
         		kHeap.insert(pointer.getKey());
         		HeapNode justIn = kHeap.First;
@@ -431,7 +432,7 @@ public class FibonacciHeap {
         
         return arr;
     }
-    
+        
    /**
     * public class HeapNode
     * 
