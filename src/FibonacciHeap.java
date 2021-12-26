@@ -1,3 +1,4 @@
+import java.util.Arrays;
 
 /**
  * FibonacciHeap
@@ -125,9 +126,12 @@ public class FibonacciHeap {
             Min.removeNode(); //Min is now floating in space
         }
 
+        System.out.println("here " + this.Min.getKey() + " " + this.First.getKey());
+
         this.totalSize--;
         this.treesCounter--;
-        //////////////////// what is the current Min? relevant before the consolidation proccess.
+        
+        //////////////////// what is the current Min? relevant before the consolidation proccess. maybe this.Min = this.First;
         this.consolidate();
     }
 
@@ -138,39 +142,50 @@ public class FibonacciHeap {
             b = swap;
         }
         HeapNode kid = a.getChild();
-        kid.getPrev().setNext(b);
-        b.setNext(kid);
         a.setChild(b);
-        linksCounter++;
+        if (kid == null) {
+        	b.setNext(b);
+        	a.setNext(a);
+        }
+        else {
+	        kid.getPrev().setNext(b);
+	        b.setNext(kid);
+        }
         a.setDegree(a.getDegree() + 1);
-
+        linksCounter++;
         return a;
     }
 
     private void consolidate() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
         HeapNode[] forest = new HeapNode[this.maxRank()];
+        HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE);
         HeapNode r = First.getNext();
         forest[First.getDegree()] = First;
-
         while (r != this.First) { //successive linking
             boolean moveOn = false;
             HeapNode tmp = r.getNext();
             HeapNode union = r;
             while (!moveOn) {
-                if (forest[r.getDegree()] == null) {
+                if (forest[r.getDegree()] == null || forest[r.getDegree()] == dummyNode || r.getDegree() == (forest.length-1)) {
                     forest[r.getDegree()] = union;
                     moveOn = true;
                 }
                 else { //rank is occupied in array
+                	int oldDegree = r.getDegree();
                     r = link(r, forest[r.getDegree()]);
+                    forest[r.getDegree()] = r;
+                    forest[oldDegree] = dummyNode;
                 }
+                
             }
             r = tmp;
         }
         
+        
+        
         int minIndex = 0;
         for (int i = 0; i < forest.length; i++) { // find the tree with the min degree, and set him to be First at this Heap.
-        	if (forest[i] != null) {
+        	if (forest[i] != null && forest[i] != dummyNode) {
                 this.First = forest[i];
                 this.Min = forest[i];
                 this.totalSize = forest[i].getSize();
@@ -184,6 +199,9 @@ public class FibonacciHeap {
         curr.setNext(curr);
         curr.setPrev(curr);
         for (int i = minIndex+1; i < forest.length; i++) { // adding the other trees to this heap.
+        	if (forest[i] != null || forest[i] != dummyNode) {
+        		continue;
+        	}
         	curr.setNext(forest[i]);
         	verifyMin(forest[i]);
         	this.totalSize += forest[i].getSize();
