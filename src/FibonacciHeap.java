@@ -100,6 +100,7 @@ public class FibonacciHeap {
     public void deleteMin() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
     	if (this.totalSize == 1) {
     		this.turnIntoEmpty();
+    		return;
     	}
     	
         if (Min.getChild() == null) { //Min is childless
@@ -410,8 +411,25 @@ public class FibonacciHeap {
     * ###CRITICAL### : you are NOT allowed to change H. 
     */
     public static int[] kMin(FibonacciHeap H, int k) {  // Time Complexity: O(k deg(H))
-        int[] arr = new int[100];
-        return arr; // should be replaced by student code
+        int[] arr = new int[k];
+        FibonacciHeap kHeap = new FibonacciHeap();
+        kHeap.insert(H.findMin().getKey());
+        kHeap.findMin().setOriginalHeap(H.findMin());
+        
+        for (int i = 0; i < k; i++) {
+        	HeapNode curr = kHeap.findMin();
+        	HeapNode pointer = curr.getOriginalHeap().getChild();
+        	arr[i] = curr.getKey();
+        	kHeap.deleteMin();
+        	do {
+        		kHeap.insert(pointer.getKey());
+        		HeapNode justIn = kHeap.First;
+        		justIn.setOriginalHeap(pointer);
+        		pointer = pointer.next;
+        	} while (pointer != curr.getOriginalHeap().getChild());
+        }
+        
+        return arr;
     }
     
    /**
@@ -431,6 +449,7 @@ public class FibonacciHeap {
         private int degree;
         private int size;
         private boolean mark;
+        private HeapNode originalHeap;
 
        public HeapNode(int key) { // Time Complexity: O(1)
     		this.key = key;
@@ -527,6 +546,14 @@ public class FibonacciHeap {
            }
 
            this.size = s +1;
+       }
+       
+       public HeapNode getOriginalHeap() {
+    	   return this.originalHeap;
+       }
+       
+       public void setOriginalHeap(HeapNode node) {
+    	   this.originalHeap = node;
        }
    }
 }
