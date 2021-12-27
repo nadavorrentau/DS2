@@ -111,6 +111,7 @@ public class FibonacciHeap {
         }
         else { //min is a parent
             HeapNode child = Min.getChild();
+            if (First == Min) First = child;
             while (!child.isRoot()) {
                 cut(child, Min); //severs tie with father and melds child to heap
                 child = child.getNext(); //move on to the next kid
@@ -348,6 +349,8 @@ public class FibonacciHeap {
         x.setKey(x.getKey() - delta); //decrease-key
         verifyMin(x);
         if (!heapInvariant(x)) { //invariant has been invalidated
+            System.out.println(x.getKey());
+            System.out.println(x.getParent().getKey());
             cascadingCuts(x, x.getParent()); //preforms cascading cuts and melds into the heap
         }
     }
