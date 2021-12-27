@@ -1,5 +1,3 @@
-import java.util.Arrays;
-
 /**
  * FibonacciHeap
  *
@@ -14,22 +12,21 @@ public class FibonacciHeap {
 	public int treesCounter = 0;
 	public int markedCounter = 0;
 
+
     public FibonacciHeap() { //Create an empty FibHeap. Time Complexity: O(1)
         First = null;
         Min = null;
     }
 
-    /*
-    public FibonacciHeap(HeapNode root) { //Create a rank 1 FibHeap. Time Complexity: O(1)
+
+    public FibonacciHeap(HeapNode root) { //Create a rank 1 FibHeap (single tree). Time Complexity: O(1)
         First = root;
-        Min = First;
-        totalSize = root.getSize();
+        Min = root;
         treesCounter = 1;
-        root.setPrev(null);
-        root.setNext(null);
+        root.setNext(root); //make root circular
         root.setMark(false); //roots are always unmarked
     }
-    */
+
 
    /**
     * public boolean isEmpty()
@@ -61,21 +58,20 @@ public class FibonacciHeap {
     *
     * Creates a node (of type HeapNode) which contains the given key, and inserts it into the heap.
     * The added key is assumed not to already belong to the heap.  
-    * 
+    *
     * Returns the newly created node.
     */
     public HeapNode insert(int key) { // Time Complexity: O(1)
         HeapNode newNode = new HeapNode(key);
-        insertNodeToHeap(newNode);
-        //FibonacciHeap singularHeap = new FibonacciHeap(newNode);
-        //this.meld(singularHeap);
-
+        this.meld(new FibonacciHeap(newNode));
+        totalSize++;
     	return newNode;
     }
-    
+
+    /*
     private void insertNodeToHeap(HeapNode newNode) { // Time Complexity: O(1)
         newNode.setParent(null);
-        newNode.setChild(null);
+        //newNode.setChild(null);
         HeapNode oldFirst = this.First;
         if (oldFirst != null) {
         	HeapNode oldPrev = oldFirst.getPrev();
@@ -91,6 +87,8 @@ public class FibonacciHeap {
         this.totalSize++;
     }
 
+     */
+
    /**
     * public void deleteMin()
     *
@@ -98,90 +96,106 @@ public class FibonacciHeap {
     *
     */
     public void deleteMin() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
-    	if (this.totalSize == 1) {
+    	if (this.totalSize == 1) { //Heap will be empty
     		this.turnIntoEmpty();
     		return;
     	}
     	
-        if (Min.getChild() == null) { //Min is childless
-            if (First == Min) {
-                First = Min.getNext();
-                Min.getNext().setPrev(null); //Min is now floating in space
+        if (Min.getChild() == null) { //Min is childless (a single node)
+            if (First == Min) { //min was first
+                First = patchOver(Min);
             }
-            else {
-                Min.getPrev().setNext(Min.getNext()); //Min is now floating in space
+            else { //min wasn't first
+                patchOver(Min);
             }
         }
-        else {
-            HeapNode start = Min.getChild();
-            cut(start, Min);
-
-            HeapNode nex = start.getNext();
-            while (nex != start) {
-                cut(nex, Min); //sever ties with father and melds child to heap
-                nex = nex.getNext();
+        else { //min is a parent
+            HeapNode child = Min.getChild();
+            while (!child.isRoot()) {
+                cut(child, Min); //severs tie with father and melds child to heap
+                child = child.getNext(); //move on to the next kid
             }
-            
-            Min.removeNode(); //Min is now floating in space
+            Min.removeNode();
         }
-
-        System.out.println("here " + this.Min.getKey() + " " + this.First.getKey());
-
+        //System.out.println("here " + this.Min.getKey() + " " + this.First.getKey());
         this.totalSize--;
         this.treesCounter--;
-        
-        //////////////////// what is the current Min? relevant before the consolidation proccess. maybe this.Min = this.First;
         this.consolidate();
     }
 
-    private HeapNode link (HeapNode a, HeapNode b) { // Time Complexity: O(1)
-        if (a.getKey() > b.getKey()) { //enforce a < b
+    private HeapNode patchOver(HeapNode del) {//makes del float in space; returns its next;
+        HeapNode delPrev = del.getPrev();
+        HeapNode delNext = del.getNext();
+
+        delPrev.setNext(delNext); //bi-directional link
+
+        del.setNext(del); //bi-directionally connect del to itself
+
+        return delNext;
+
+    }
+
+    private HeapNode link(HeapNode a, HeapNode b) { // Time Complexity: O(1)
+        if (a.getKey() >= b.getKey()) { //enforce a < b
             HeapNode swap = a;
             a = b;
             b = swap;
         }
-        HeapNode kid = a.getChild();
+
+        HeapNode firstChild = a.getChild();
+        HeapNode lastChild = a.getChild().getPrev();
         a.setChild(b);
-        if (kid == null) {
-        	b.setNext(b);
-        	a.setNext(a);
-        }
-        else {
-	        kid.getPrev().setNext(b);
-	        b.setNext(kid);
+        if (firstChild != null) { //a has other children
+            b.setNext(firstChild);
+            b.setPrev(lastChild);
         }
         a.setDegree(a.getDegree() + 1);
+        //a.setSize(a.getSize() + b.getSize() + 1);
         linksCounter++;
         return a;
     }
 
-    private void consolidate() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
-        HeapNode[] forest = new HeapNode[this.maxRank()];
-        HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE);
+    private void consolidate() { // Amortized Time Complexity: O(log n); Worst Case Time Complexity: O(n)
+        HeapNode[] forest = new HeapNode[this.treesCounter + 1];
+
+        forest[First.getDegree()] = First;
         HeapNode r = First.getNext();
-        forest[First.getDegree()+1] = First;
         while (r != this.First) { //successive linking
             boolean moveOn = false;
-            HeapNode tmp = r.getNext();
-            HeapNode union = r;
-            while (!moveOn) {
-                if (forest[r.getDegree()] == null || forest[r.getDegree()] == dummyNode || r.getDegree() == (forest.length-1)) {
-                    forest[r.getDegree()] = union;
+            HeapNode nex = r.getNext();
+            while (!moveOn) {//node r has not found its eternal resting place
+                if (forest[r.getDegree()] == null) {
+                    forest[r.getDegree()] = r;
                     moveOn = true;
                 }
                 else { //rank is occupied in array
-                	int oldDegree = r.getDegree();
-                    r = link(r, forest[r.getDegree()]);
-                    forest[r.getDegree()] = r;
-                    forest[oldDegree] = dummyNode;
+                    HeapNode union = link(r, forest[r.getDegree()]); //link between r and the occupant
+                    forest[r.getDegree() - 1] = null; //vacate their former cell
+                    r = union; //try to place their union in its correct cell
                 }
-                
             }
-            r = tmp;
+            r = nex;
         }
+
+        First = forest[0];
+        for (int i=0; i < forest.length; i++) {
+            verifyMin(forest[i]); //restore the validity of Min
+            if (forest[i+1] == null) { //reached Max Rank
+                forest[i].setNext(First);
+                break;
+            }
+            else {//connect roots
+                forest[i].setNext(forest[i+1]);
+            }
+        } //this heap is now consolidated
+    }
+        /*
+        HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE); //forest[r.getDegree()] == dummyNode ||
+         || r.getDegree() == (forest.length-1)
+
+         */
         
-        
-        
+        /*
         int minIndex = 0;
         for (int i = 0; i < forest.length; i++) { // find the tree with the min degree, and set him to be First at this Heap.
         	if (forest[i] != null && forest[i] != dummyNode) {
@@ -193,6 +207,8 @@ public class FibonacciHeap {
                 break;
         	}
         }
+
+
 
         HeapNode curr = this.First;
         curr.setNext(curr);
@@ -208,16 +224,30 @@ public class FibonacciHeap {
         	curr = forest[i];
         	this.First.setPrev(curr);
         	this.treesCounter++;
-        } //this heap is now consolidated
+        }
+
+         */
+
+
+    private int maxRank() { // Time Complexity: O(n)
+        int maxRank = First.getDegree();
+        HeapNode r = First.getNext();
+        while (r != First) {
+            if (r.getDegree() > maxRank) maxRank = r.getDegree();
+            r = r.getNext();
+        }
+        return maxRank;
+    }
+    /*
+
+    private int maxRank(HeapNode[] arr) { // Time Complexity: O(1)
+        for (int n=arr.length -1; n>=0; n--) {
+            if (arr[n] != null) return n;
+        }
+        return 0;
     }
 
-    private int maxRank() { // Time Complexity: O(1)
-        double phi = 1.618033989;
-        int n = 0;
-        if (totalSize >0) n = (int) Math.ceil(Math.log(totalSize) / Math.log(phi));
-
-        return n;
-    }
+     */
 
    /**
     * public HeapNode findMin()
@@ -230,11 +260,6 @@ public class FibonacciHeap {
     }
 
 
-    private HeapNode findLastRoot() { // Time Complexity: O(1)
-        if (this.First.getPrev() != null) return this.First.getPrev();
-        else return First;
-    }
-
    /**
     * public void meld (FibonacciHeap heap2)
     *
@@ -244,15 +269,18 @@ public class FibonacciHeap {
 
     public void meld (FibonacciHeap heap2) { // Time Complexity: O(1)
         if (heap2.isEmpty()) return;
+
         else if (this.isEmpty()) {
             this.First = heap2.First;
             this.Min = heap2.Min;
         }
 
-        HeapNode Last1 = this.findLastRoot();
-        HeapNode Last2 = heap2.findLastRoot();
-        Last2.setNext(this.First); //link is implemented bi-directionally
-        heap2.First.setPrev(Last1);
+        //connect heaps lazily:
+        HeapNode trueLast = this.First.getPrev();
+        HeapNode middleLast = heap2.First.getPrev();
+        heap2.First.setPrev(trueLast); //link is implemented bi-directionally
+        middleLast.setNext(this.First); //link is implemented bi-directionally
+
         this.First = heap2.First; //new is always to the left
 
         this.verifyMin(heap2.Min);
@@ -267,7 +295,7 @@ public class FibonacciHeap {
     * Returns the number of elements in the heap.
     *   
     */
-    public int size()     { // Time Complexity: O(1)
+    public int size() { // Time Complexity: O(1)
     	return totalSize;
     }
     	
@@ -279,19 +307,16 @@ public class FibonacciHeap {
     * 
     */
     public int[] countersRep() { // Time complexity O(n)
-    	if (this.First == null) {
+    	if (this.isEmpty()) {
     		return new int[0];
     	}
-    	int[] tally = new int[this.maxRank()];
+    	int[] tally = new int[this.maxRank() + 1];
         tally[First.getDegree()]++;
-
         HeapNode r = First.getNext();
-
         while (r != First) {
             tally[r.getDegree()]++;
             r = r.getNext();
         }
-
         return tally;
     }
 	
@@ -304,7 +329,7 @@ public class FibonacciHeap {
     */
     public void delete(HeapNode x) { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
     	int distFromMin = x.getKey() - this.Min.getKey();
-        decreaseKey(x, distFromMin - 1);
+        decreaseKey(x, distFromMin - 1); //x is now surely the minimum
         this.deleteMin(); //as the new minimum, x has been deleted
     }
 
@@ -318,42 +343,48 @@ public class FibonacciHeap {
     public void decreaseKey(HeapNode x, int delta) { // Amortized Time Complexity: O(1), Worst Case Time Complexity: O(log n)
         x.setKey(x.getKey() - delta); //decrease-key
         verifyMin(x);
-
-        if (x.isRoot()) return;
-        else if (x.getKey() >= x.getParent().getKey())  return; //heap invariant holds
-        else { //invariant has been invalidated
+        if (!heapInvariant(x)) { //invariant has been invalidated
             cascadingCuts(x, x.getParent()); //preforms cascading cuts and melds into the heap
         }
     }
+
+    private boolean heapInvariant(HeapNode x) {
+        if (x.isRoot()) return true;
+        else return x.getKey() >= x.getParent().getKey();
+
+    }
     
-    private void cascadingCuts(HeapNode x, HeapNode y) { // Amortized Time Complexity: O(1), Worst Case Time Complexity: O(log n)
+    private void cascadingCuts(HeapNode x, HeapNode y)
+    { // Amortized Time Complexity: O(1); Worst Case Time Complexity: O(log n)
     	cut(x,y);
-    	if (y.getParent() != null) {
-    		if (!y.isMark()) {
+    	if (!y.isRoot()) {
+    		if (!y.isMark()) { //mark the father
     			y.setMark(true);
     			markedCounter++;
     		}
-    		else {
+    		else { //father was already marked -- trigger cascading cuts
     			cascadingCuts(y, y.getParent());
     		}
     	}	
     }
     
-    private void cut(HeapNode x, HeapNode y) { //sever x from his father. Time Complexity: O(1)
+    private void cut(HeapNode x, HeapNode y) { //sever x from his father y. Time Complexity: O(1)
     	x.setParent(null);
-    	if (x.isMark()) {
-        	x.setMark(false);
-    		markedCounter--;
-    	}
-    	y.setDegree(y.getDegree()-1);
-    	if (x.getNext() == x) {
+    	y.setDegree(y.getDegree() - 1);
+
+    	if (x.getNext() == x) { //x is an only child
     		y.setChild(null);
     	}
-    	else {
+    	else { //x has siblings
     		y.setChild(x.getNext());
-    		x.getPrev().setNext(x.getNext());
+    		patchOver(x);
     	}
-    	insertNodeToHeap(x);
+
+    	//insertNodeToHeap(x);
+        this.meld(new FibonacciHeap(x)); //melds cut tree to our heap
+
+        x.setMark(false); //unmark x now that it's been cut
+        markedCounter--;
     }
 
     
@@ -472,6 +503,8 @@ public class FibonacciHeap {
 
        public HeapNode(int key) { // Time Complexity: O(1)
     		this.key = key;
+            this.next = this;
+            this.prev = this;
             this.size = 1;
             this.degree = 0;
             this.mark = false;
@@ -546,12 +579,16 @@ public class FibonacciHeap {
        public int getSize() { // Time Complexity: O(1)
            return size;
        }
+
+       public void setSize(int s) {
+           this.size = s;
+       }
        
        private void removeNode() { // Time Complexity: O(1)
            this.setParent(null);
            this.setChild(null);
-           this.setNext(null);
-           this.setPrev(null);
+           this.setNext(this);
+           this.setPrev(this);
        }
 
        public void updateSize() {
