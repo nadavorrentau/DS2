@@ -143,11 +143,10 @@ public class FibonacciHeap {
         }
 
         HeapNode firstChild = a.getChild();
-        HeapNode lastChild = a.getChild().getPrev();
         a.setChild(b);
         if (firstChild != null) { //a has other children
             b.setNext(firstChild);
-            b.setPrev(lastChild);
+            b.setPrev(a.getChild().getPrev());
         }
         a.setDegree(a.getDegree() + 1);
         //a.setSize(a.getSize() + b.getSize() + 1);
@@ -177,17 +176,22 @@ public class FibonacciHeap {
             r = nex;
         }
 
-        First = forest[0];
-        for (int i=0; i < forest.length; i++) {
-            verifyMin(forest[i]); //restore the validity of Min
-            if (forest[i+1] == null) { //reached Max Rank
-                forest[i].setNext(First);
-                break;
+        Min = null;
+        HeapNode a = null;
+        HeapNode b = null;
+        for (HeapNode root : forest) {
+            if (root != null && a == null) { //bucket is full
+                a = root;
+                verifyMin(a);
             }
-            else {//connect roots
-                forest[i].setNext(forest[i+1]);
+            else if (root != null) {
+                a.setNext(root);
+                verifyMin(root);
+                b = root;
             }
-        } //this heap is now consolidated
+        }
+        this.First = a;
+        this.First.setPrev(b); //this heap is now consolidated
     }
         /*
         HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE); //forest[r.getDegree()] == dummyNode ||

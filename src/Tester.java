@@ -8,6 +8,19 @@ public class Tester {
 
 
         FibonacciHeap t = new FibonacciHeap();
+        for (int i=0; i<11; i++) {
+            t.insert(i);
+        }
+        printRoots(t);
+
+        t.deleteMin();
+        printRoots(t);
+
+        t.deleteMin();
+        printRoots(t);
+
+
+        /*
         t.insert(10);
         t.insert(20);
         System.out.println(Arrays.toString(t.countersRep()));
@@ -42,6 +55,7 @@ public class Tester {
          */
 
 
+
     }
 
     public static void printRoots(FibonacciHeap fib) {
@@ -56,4 +70,18 @@ public class Tester {
 
         System.out.println(l);
     }
+
+    public static void walkOver(FibonacciHeap fib) {
+        FibonacciHeap.HeapNode r = fib.First.getNext();
+        List<Integer> l = new ArrayList<>();
+        l.add(fib.First.getKey());
+
+        while (r != fib.First) {
+            l.add(r.getKey());
+            r = r.getNext();
+        }
+
+        System.out.println(l);
+    }
+
 }
