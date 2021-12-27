@@ -8,7 +8,7 @@ import java.util.Arrays;
 public class FibonacciHeap {
 	public HeapNode Min;
 	public HeapNode First;
-	public int totalSize;
+	public int totalSize = 0;
 	public static int linksCounter = 0;
 	public static int cutsCounter = 0;
 	public int treesCounter = 0;
@@ -17,7 +17,6 @@ public class FibonacciHeap {
     public FibonacciHeap() { //Create an empty FibHeap. Time Complexity: O(1)
         First = null;
         Min = null;
-        totalSize = 0;
     }
 
     /*
@@ -160,7 +159,7 @@ public class FibonacciHeap {
         HeapNode[] forest = new HeapNode[this.maxRank()];
         HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE);
         HeapNode r = First.getNext();
-        forest[First.getDegree()] = First;
+        forest[First.getDegree()+1] = First;
         while (r != this.First) { //successive linking
             boolean moveOn = false;
             HeapNode tmp = r.getNext();
@@ -304,7 +303,8 @@ public class FibonacciHeap {
     *
     */
     public void delete(HeapNode x) { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
-    	decreaseKey(x, Integer.MAX_VALUE);
+    	int distFromMin = x.getKey() - this.Min.getKey();
+        decreaseKey(x, distFromMin - 1);
         this.deleteMin(); //as the new minimum, x has been deleted
     }
 
