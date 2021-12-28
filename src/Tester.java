@@ -1,9 +1,13 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Tester {
     public static void main (String[] args) {
+
+        test0();
+        /*
 
 
 
@@ -18,6 +22,14 @@ public class Tester {
 
         t.deleteMin();
         printRoots(t);
+
+        FibonacciHeap.HeapNode t1 = t.insert(30);
+        FibonacciHeap.HeapNode t2 = t.insert(40);
+
+
+
+        //System.out.println("key: " + t.link(t2,t1).getKey());
+
 
 
         /*
@@ -82,6 +94,48 @@ public class Tester {
         }
 
         System.out.println(l);
+    }
+
+    static void test0() {
+        FibonacciHeap fibonacciHeap = new FibonacciHeap();
+        ArrayList<Integer> numbers = new ArrayList();
+
+        int i;
+        for(i = 0; i < 22; ++i) {
+            numbers.add(i);
+        }
+
+        Collections.shuffle(numbers);
+        //System.out.println(numbers);
+
+        for(i = 0; i < 22; ++i) {
+            fibonacciHeap.insert((Integer)numbers.get(i));
+        }
+
+        for(i = 0; i < 22; ++i) {
+            //System.out.println("i: " + i + " find_min: " + fibonacciHeap.findMin().getKey());
+            if (fibonacciHeap.findMin().getKey() != i) {
+                System.out.println("i: " + i + " find_min: " + fibonacciHeap.findMin().getKey());
+                return;
+            }
+
+            fibonacciHeap.deleteMin();
+        }
+
+    }
+    private void printKids(FibonacciHeap.HeapNode p) {
+        FibonacciHeap.HeapNode child = p.getChild();
+        int[] arr = new int[25];
+        arr[0] = child.getKey();
+        FibonacciHeap.HeapNode nex = child.getNext();
+        for (int i=0; i<25; i++) {
+            if (nex == child) break;
+            arr[i] = nex.getKey();
+            nex = nex.getNext();
+        }
+        System.out.println(Arrays.toString(arr));
+
+
     }
 
 }

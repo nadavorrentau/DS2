@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * FibonacciHeap
  *
@@ -96,47 +100,95 @@ public class FibonacciHeap {
     *
     */
     public void deleteMin() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
-    	if (this.totalSize == 1) { //Heap will be empty
+        printForest(Min);
+        System.out.println("MINIMUM IS:   " + Min.getKey() + "  BEHOLD!");
+        System.out.println(Min.getKey());
+        printKids(Min);
+    	if (this.totalSize <= 1) { //Heap will be empty
     		this.turnIntoEmpty();
     		return;
     	}
-    	
+
         if (Min.getChild() == null) { //Min is childless (a single node)
             if (First == Min) { //min was first
                 First = patchOver(Min);
+                System.out.println("A");
             }
             else { //min wasn't first
                 patchOver(Min);
+                System.out.println("B");
             }
         }
         else { //min is a parent
             HeapNode child = Min.getChild();
             if (First == Min) First = child;
             while (!child.isRoot()) {
+                HeapNode nex = child.getNext();
                 cut(child, Min); //severs tie with father and melds child to heap
-                child = child.getNext(); //move on to the next kid
+                child = nex; //move on to the next kid
             }
-            Min.removeNode();
+            patchOver(Min);
+            System.out.println("C");
+            //Min.removeNode();
         }
+        Min = null;
         //System.out.println("here " + this.Min.getKey() + " " + this.First.getKey());
         this.totalSize--;
         this.treesCounter--;
         this.consolidate();
     }
 
+    private void printForest(HeapNode p) {
+        System.out.println("PRINT FOREST ~~~~~~~~~~~~ PRINT FOREST");
+        printTree(First);
+
+        HeapNode r = First.getNext();
+        while (r != First) {
+            printTree(r);
+            r = r.getNext();
+        }
+
+    }
+
+    private void printTree(HeapNode p) {
+        System.out.println("PrintTree: Tree root is "  + p.getKey());
+        while (p != null) {
+            printKids(p);
+            p = p.getChild();
+        }
+    }
+
+    private void printKids(HeapNode p) {
+        if (p.getChild() == null) {
+            System.out.println("Childless");
+            return;
+        }
+        //System.out.println("Min prev: " + p.getPrev().getKey() + " Min next " + p.getNext().getKey());
+        HeapNode child = p.getChild();
+        List<Integer> l= new ArrayList<>();
+        l.add(child.getKey());
+        HeapNode nex = child.getNext();
+        System.out.println(child.getKey());
+        while (nex != child) {
+            l.add(nex.getKey());
+            System.out.println("child: " + child.getKey() + " nex " + nex.getKey());
+            nex = nex.getNext();
+        }
+        System.out.println(l);
+    }
+
     private HeapNode patchOver(HeapNode del) {//makes del float in space; returns its next;
         HeapNode delPrev = del.getPrev();
         HeapNode delNext = del.getNext();
-
+        //System.out.println("del: " + del.getKey() + " del prev " + del.getPrev());
         delPrev.setNext(delNext); //bi-directional link
-
         del.setNext(del); //bi-directionally connect del to itself
 
         return delNext;
 
     }
 
-    private HeapNode link(HeapNode a, HeapNode b) { // Time Complexity: O(1)
+    public HeapNode link(HeapNode a, HeapNode b) { // Time Complexity: O(1)
         if (a.getKey() >= b.getKey()) { //enforce a < b
             HeapNode swap = a;
             a = b;
@@ -146,8 +198,12 @@ public class FibonacciHeap {
         HeapNode firstChild = a.getChild();
         a.setChild(b);
         if (firstChild != null) { //a has other children
+            HeapNode lastChild = firstChild.getPrev();
             b.setNext(firstChild);
-            b.setPrev(a.getChild().getPrev());
+            b.setPrev(lastChild);
+        }
+        else {
+            b.setNext(b);
         }
         a.setDegree(a.getDegree() + 1);
         //a.setSize(a.getSize() + b.getSize() + 1);
@@ -157,42 +213,42 @@ public class FibonacciHeap {
 
     private void consolidate() { // Amortized Time Complexity: O(log n); Worst Case Time Complexity: O(n)
         HeapNode[] forest = new HeapNode[this.treesCounter + 1];
+        System.out.println("NEW RUN");
 
         forest[First.getDegree()] = First;
         HeapNode r = First.getNext();
         while (r != this.First) { //successive linking
-            boolean moveOn = false;
             HeapNode nex = r.getNext();
-            while (!moveOn) {//node r has not found its eternal resting place
-                if (forest[r.getDegree()] == null) {
-                    forest[r.getDegree()] = r;
-                    moveOn = true;
-                }
-                else { //rank is occupied in array
-                    HeapNode union = link(r, forest[r.getDegree()]); //link between r and the occupant
-                    forest[r.getDegree() - 1] = null; //vacate their former cell
-                    r = union; //try to place their union in its correct cell
-                }
+            while (forest[r.getDegree()] != null) {//node r has not found its eternal resting place
+                //System.out.println("r key: " + r.getKey() + " other key: " + forest[r.getDegree()].getKey() );
+                r = link(r, forest[r.getDegree()]); //link between r and the occupant
+                //System.out.println("r key: " + r.getKey());
+                forest[r.getDegree() - 1] = null; //vacate their former cell
             }
+            forest[r.getDegree()] = r; //place their union in an empty spot
+            System.out.println("r (key) : " + r.getKey());
             r = nex;
         }
 
-        Min = null;
+        System.out.println(Arrays.toString(forest));
+
+        First = null;
         HeapNode a = null;
-        HeapNode b = null;
         for (HeapNode root : forest) {
-            if (root != null && a == null) { //bucket is full
+            if (root != null && First == null) {
+                First = root;
                 a = root;
-                verifyMin(a);
+                System.out.println("a: " + a + " key: " + a.getKey() + " degree: " + a.getDegree());
+                verifyMin(First);
             }
             else if (root != null) {
                 a.setNext(root);
+                a = root;
+                System.out.println("a: " + a + " key: " + a.getKey());
                 verifyMin(root);
-                b = root;
             }
         }
-        this.First = a;
-        this.First.setPrev(b); //this heap is now consolidated
+        this.First.setPrev(a); //this heap is now consolidated
     }
         /*
         HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE); //forest[r.getDegree()] == dummyNode ||
@@ -349,8 +405,6 @@ public class FibonacciHeap {
         x.setKey(x.getKey() - delta); //decrease-key
         verifyMin(x);
         if (!heapInvariant(x)) { //invariant has been invalidated
-            System.out.println(x.getKey());
-            System.out.println(x.getParent().getKey());
             cascadingCuts(x, x.getParent()); //preforms cascading cuts and melds into the heap
         }
     }
@@ -510,8 +564,6 @@ public class FibonacciHeap {
 
        public HeapNode(int key) { // Time Complexity: O(1)
     		this.key = key;
-            this.next = this;
-            this.prev = this;
             this.size = 1;
             this.degree = 0;
             this.mark = false;

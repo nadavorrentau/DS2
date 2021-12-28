@@ -211,10 +211,9 @@ public class OtherTest {
         }
 
         for(i = 0; i < 5; ++i) {
-            System.out.println(fibonacciHeap.findMin().getKey());
+            //System.out.println("i: " + i + " find_min: " + fibonacciHeap.findMin().getKey());
             if (fibonacciHeap.findMin().getKey() != i) {
-                System.out.println(i);
-                System.out.println(fibonacciHeap.findMin().getKey());
+                System.out.println("i: " + i + " find_min: " + fibonacciHeap.findMin().getKey());
                 bugFound(test);
                 return;
             }
