@@ -100,9 +100,8 @@ public class FibonacciHeap {
     *
     */
     public void deleteMin() { // Amortized Time Complexity: O(log n), Worst Case Time Complexity: O(n)
-        printForest(Min);
+        printForest();
         System.out.println("MINIMUM IS:   " + Min.getKey() + "  BEHOLD!");
-        System.out.println(Min.getKey());
         printKids(Min);
     	if (this.totalSize <= 1) { //Heap will be empty
     		this.turnIntoEmpty();
@@ -110,25 +109,23 @@ public class FibonacciHeap {
     	}
 
         if (Min.getChild() == null) { //Min is childless (a single node)
-            if (First == Min) { //min was first
-                First = patchOver(Min);
-                System.out.println("A");
-            }
-            else { //min wasn't first
-                patchOver(Min);
-                System.out.println("B");
-            }
+            if (First == Min) First = patchOver(Min);
+            patchOver(Min);
+            System.out.println("B");
         }
         else { //min is a parent
             HeapNode child = Min.getChild();
             if (First == Min) First = child;
+            HeapNode prev = Min.getPrev();
+            HeapNode nex = Min.getNext();
             while (!child.isRoot()) {
-                HeapNode nex = child.getNext();
+                HeapNode nextChild = child.getNext();
                 cut(child, Min); //severs tie with father
-                Min.getPrev().setNext(child);
-                child.setNext(Min.getNext());
+                prev.setNext(child);
+                child.setNext(nex);
+                prev = child;
                 treesCounter++;
-                child = nex; //move on to the next kid
+                child = nextChild; //move on to the next kid
             }
             patchOver(Min);
             System.out.println("C");
@@ -141,7 +138,7 @@ public class FibonacciHeap {
         this.consolidate();
     }
 
-    private void printForest(HeapNode p) {
+    public void printForest() {
         System.out.println("PRINT FOREST ~~~~~~~~~~~~ PRINT FOREST");
         printTree(First);
 
@@ -153,8 +150,8 @@ public class FibonacciHeap {
 
     }
 
-    private void printTree(HeapNode p) {
-        System.out.println("PrintTree: Tree root is "  + p.getKey());
+    public void printTree(HeapNode p) {
+        System.out.println("ROOT IS --> "  + p.getKey());
         while (p != null) {
             printKids(p);
             p = p.getChild();
@@ -171,10 +168,8 @@ public class FibonacciHeap {
         List<Integer> l= new ArrayList<>();
         l.add(child.getKey());
         HeapNode nex = child.getNext();
-        System.out.println(child.getKey());
         while (nex != child) {
             l.add(nex.getKey());
-            System.out.println("child: " + child.getKey() + " nex " + nex.getKey());
             nex = nex.getNext();
         }
         System.out.println(l);
@@ -209,16 +204,14 @@ public class FibonacciHeap {
             b.setNext(b);
         }
         a.setDegree(a.getDegree() + 1);
-        //a.setSize(a.getSize() + b.getSize() + 1);
         linksCounter++;
-	this.treesCounter--;
+	    this.treesCounter--;
         return a;
     }
 
     private void consolidate() { // Amortized Time Complexity: O(log n); Worst Case Time Complexity: O(n)
         HeapNode[] forest = new HeapNode[this.treesCounter + 1];
         System.out.println("NEW RUN");
-
         forest[First.getDegree()] = First;
         HeapNode r = First.getNext();
         while (r != this.First) { //successive linking
@@ -239,59 +232,22 @@ public class FibonacciHeap {
         First = null;
         HeapNode a = null;
         for (HeapNode root : forest) {
-            if (root != null && First == null) {
+            //Tester.printRoots(this);
+            if (root != null && First == null) {//assign First root
                 First = root;
                 a = root;
-                System.out.println("a: " + a + " key: " + a.getKey() + " degree: " + a.getDegree());
+                //System.out.println("a: " + a + " key: " + a.getKey() + " degree: " + a.getDegree());
                 verifyMin(First);
             }
             else if (root != null) {
                 a.setNext(root);
                 a = root;
-                System.out.println("a: " + a + " key: " + a.getKey());
+                //System.out.println("a: " + a + " key: " + a.getKey() + " degree: " + a.getDegree());
                 verifyMin(root);
             }
         }
-        this.First.setPrev(a); //this heap is now consolidated
+        a.setNext(First); //this heap is now consolidated
     }
-        /*
-        HeapNode dummyNode = new HeapNode(Integer.MAX_VALUE); //forest[r.getDegree()] == dummyNode ||
-         || r.getDegree() == (forest.length-1)
-
-         */
-        
-        /*
-        int minIndex = 0;
-        for (int i = 0; i < forest.length; i++) { // find the tree with the min degree, and set him to be First at this Heap.
-        	if (forest[i] != null && forest[i] != dummyNode) {
-                this.First = forest[i];
-                this.Min = forest[i];
-                this.totalSize = forest[i].getSize();
-                this.treesCounter = 1;
-                minIndex = i;
-                break;
-        	}
-        }
-
-
-
-        HeapNode curr = this.First;
-        curr.setNext(curr);
-        curr.setPrev(curr);
-        for (int i = minIndex+1; i < forest.length; i++) { // adding the other trees to this heap.
-        	if (forest[i] != null || forest[i] != dummyNode) {
-        		continue;
-        	}
-        	curr.setNext(forest[i]);
-        	verifyMin(forest[i]);
-        	this.totalSize += forest[i].getSize();
-        	
-        	curr = forest[i];
-        	this.First.setPrev(curr);
-        	this.treesCounter++;
-        }
-
-         */
 
 
     private int maxRank() { // Time Complexity: O(n)

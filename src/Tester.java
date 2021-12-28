@@ -5,13 +5,38 @@ import java.util.List;
 
 public class Tester {
     public static void main (String[] args) {
-
         test0();
+
+
+        FibonacciHeap t = new FibonacciHeap();
+        t.insert(10);
+        t.insert(20);
+        t.insert(30);
+        t.insert(40);
+        t.insert(50);
+
+        FibonacciHeap t2 = new FibonacciHeap();
+        t2.insert(1);
+        t2.insert(2);
+        t2.insert(5);
+
+        //t.printForest();
+        System.out.println(t.findMin().getKey());
+        //t2.printForest();
+
+        FibonacciHeap.HeapNode u = t.link(t.Min, t.Min.getNext().getNext());
+        //t.printTree(u);
+        u = t.link(t.Min, t.Min.getNext());
+        t.printTree(u);
+
+        t2.meld(new FibonacciHeap(u));
+        t2.printForest();
+
+
         /*
 
 
 
-        FibonacciHeap t = new FibonacciHeap();
         for (int i=0; i<11; i++) {
             t.insert(i);
         }
