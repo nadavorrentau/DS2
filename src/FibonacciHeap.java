@@ -440,6 +440,7 @@ public class FibonacciHeap {
     private void cascadingCuts(HeapNode x, HeapNode y)
     { // Amortized Time Complexity: O(1); Worst Case Time Complexity: O(log n)
     	cut(x,y);
+        cutsCounter++;
         this.left_meld(new FibonacciHeap(x)); //melds cut tree to our heap
 	if (x.isMark()) markedCounter--;
         x.setMark(false); //unmark x now that it's been cut
