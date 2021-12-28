@@ -211,6 +211,7 @@ public class FibonacciHeap {
         a.setDegree(a.getDegree() + 1);
         //a.setSize(a.getSize() + b.getSize() + 1);
         linksCounter++;
+	this.treesCounter--;
         return a;
     }
 
@@ -440,13 +441,13 @@ public class FibonacciHeap {
     { // Amortized Time Complexity: O(1); Worst Case Time Complexity: O(log n)
     	cut(x,y);
         this.left_meld(new FibonacciHeap(x)); //melds cut tree to our heap
+	if (x.isMark()) markedCounter--;
         x.setMark(false); //unmark x now that it's been cut
-        markedCounter--;
 
     	if (!y.isRoot()) {
     		if (!y.isMark()) { //mark the father
+			if (!x.isMark()) markedCounter++;
     			y.setMark(true);
-    			markedCounter++;
     		}
     		else { //father was already marked -- trigger cascading cuts
     			cascadingCuts(y, y.getParent());
