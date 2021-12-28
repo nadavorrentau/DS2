@@ -67,7 +67,7 @@ public class FibonacciHeap {
     */
     public HeapNode insert(int key) { // Time Complexity: O(1)
         HeapNode newNode = new HeapNode(key);
-        this.meld(new FibonacciHeap(newNode));
+        this.left_meld(new FibonacciHeap(newNode));
         totalSize++;
     	return newNode;
     }
@@ -124,7 +124,10 @@ public class FibonacciHeap {
             if (First == Min) First = child;
             while (!child.isRoot()) {
                 HeapNode nex = child.getNext();
-                cut(child, Min); //severs tie with father and melds child to heap
+                cut(child, Min); //severs tie with father
+                Min.getPrev().setNext(child);
+                child.setNext(Min.getNext());
+                treesCounter++;
                 child = nex; //move on to the next kid
             }
             patchOver(Min);
@@ -335,6 +338,24 @@ public class FibonacciHeap {
             this.First = heap2.First;
             this.Min = heap2.Min;
         }
+        //connect heaps lazily:
+        HeapNode middleLast = this.First.getPrev();
+        HeapNode trueLast = heap2.First.getPrev();
+        middleLast.setNext(heap2.First); //link is implemented bi-directionally
+        trueLast.setNext(this.First); //link is implemented bi-directionally
+        this.verifyMin(heap2.Min);
+        this.totalSize += heap2.totalSize;
+        this.treesCounter += heap2.treesCounter;
+        this.markedCounter += heap2.markedCounter;
+    }
+
+    public void left_meld (FibonacciHeap heap2) { // Time Complexity: O(1)
+        if (heap2.isEmpty()) return;
+
+        else if (this.isEmpty()) {
+            this.First = heap2.First;
+            this.Min = heap2.Min;
+        }
 
         //connect heaps lazily:
         HeapNode trueLast = this.First.getPrev();
@@ -418,6 +439,10 @@ public class FibonacciHeap {
     private void cascadingCuts(HeapNode x, HeapNode y)
     { // Amortized Time Complexity: O(1); Worst Case Time Complexity: O(log n)
     	cut(x,y);
+        this.left_meld(new FibonacciHeap(x)); //melds cut tree to our heap
+        x.setMark(false); //unmark x now that it's been cut
+        markedCounter--;
+
     	if (!y.isRoot()) {
     		if (!y.isMark()) { //mark the father
     			y.setMark(true);
@@ -430,23 +455,21 @@ public class FibonacciHeap {
     }
     
     private void cut(HeapNode x, HeapNode y) { //sever x from his father y. Time Complexity: O(1)
-    	x.setParent(null);
-    	y.setDegree(y.getDegree() - 1);
+        x.setParent(null);
+        y.setDegree(y.getDegree() - 1);
 
-    	if (x.getNext() == x) { //x is an only child
-    		y.setChild(null);
-    	}
-    	else { //x has siblings
-    		y.setChild(x.getNext());
-    		patchOver(x);
-    	}
-
-    	//insertNodeToHeap(x);
-        this.meld(new FibonacciHeap(x)); //melds cut tree to our heap
-
-        x.setMark(false); //unmark x now that it's been cut
-        markedCounter--;
+        if (x.getNext() == x) { //x is an only child
+            y.setChild(null);
+        }
+        else if (y.getChild() == x) {//x is the first child of many
+            y.setChild(x.getNext());
+            patchOver(x);
+        }
+        else { //x is a middle child
+            patchOver(x);
+        }
     }
+
 
     
     /*
